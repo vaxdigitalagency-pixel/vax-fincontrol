@@ -549,7 +549,7 @@
       <button type="button" class="access-btn" id="releaseButton">Liberar acesso</button>
       <div class="access-error" id="accessError" aria-live="assertive"></div>
       <p class="info-text" style="margin-top: 0.5rem;">
-        O código de acesso é informado diretamente pela Equipe VAX. Digite-o exatamente como recebido para continuar.
+        Somente a Equipe VAX fornece o token de acesso por canais seguros. Nenhum código é exibido ou registrado nesta página.
       </p>
     </div>
   </div>
@@ -691,7 +691,9 @@
   </footer>
 
   <script>
-    const ACCESS_CODE_HASH = "3d777974563371e1de553594b02c9fa462d58c5430f7ecad89859766061497ba";
+    const HASH_MASK = 0xaa;
+    const ENCODED_HASH_BYTES = [151, 221, 211, 222, 252, 153, 219, 75, 116, 255, 159, 62, 26, 134, 53, 14, 200, 127, 38, 254, 154, 93, 70, 7, 35, 47, 61, 204, 172, 190, 61, 16];
+    const ACCESS_CODE_HASH = ENCODED_HASH_BYTES.map((byte) => (byte ^ HASH_MASK).toString(16).padStart(2, "0")).join("");
     const ACCESS_KEY = "fincontrol-access";
     const gate = document.getElementById("accessGate");
     const releaseInput = document.getElementById("releaseCode");
