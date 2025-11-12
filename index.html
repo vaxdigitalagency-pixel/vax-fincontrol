@@ -479,6 +479,13 @@
       transform: translateY(-1px);
     }
 
+    .access-btn:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      transform: none;
+      filter: saturate(0.7);
+    }
+
     .access-error {
       color: #f97373;
       font-size: 0.8rem;
@@ -692,71 +699,311 @@
 
   <script>
     const HASH_PATTERN = [0xaa, 0x55, 0xee, 0x11];
-    const HASH_PAYLOAD = "lyKXZfxmn/B0ANuFGnlxtciAYkWaogK8I9B5d6xBeas=";
+    const HASH_SEGMENTS = [
+      "lyKXZfxmn/",
+      "B0ANuFGnlx",
+      "tciAYkWaog",
+      "K8I9B5d6xB",
+      "eas=",
+    ];
 
-    function recuperarHash(payload) {
-      const binary = typeof atob === "function" ? atob(payload) : Buffer.from(payload, "base64").toString("binary");
-      const bytes = Array.from(binary, (char, index) => char.charCodeAt(0) ^ HASH_PATTERN[index % HASH_PATTERN.length]);
+    function recuperarHash(parts, pattern) {
+      const payload = parts.join("");
+      const binary =
+        typeof atob === "function"
+          ? atob(payload)
+          : Buffer.from(payload, "base64").toString("binary");
+      const bytes = Array.from(binary, (char, index) =>
+        char.charCodeAt(0) ^ pattern[index % pattern.length]
+      );
       return bytes.map((byte) => byte.toString(16).padStart(2, "0")).join("");
     }
 
-    const ACCESS_CODE_HASH = recuperarHash(HASH_PAYLOAD);
+    function createSafeStorage(getter) {
+      const memoryStore = {};
+      let storageRef = null;
+
+      try {
+        storageRef = getter();
+        if (storageRef) {
+          const probe = "__fincontrol_probe__";
+          storageRef.setItem(probe, probe);
+          storageRef.removeItem(probe);
+        }
+      } catch (error) {
+        storageRef = null;
+      }
+
+      const access = (fn) => {
+        if (storageRef) {
+          try {
+            return fn(storageRef);
+          } catch (error) {
+            storageRef = null;
+          }
+        }
+        return null;
+      };
+
+      return {
+        get(key) {
+          const value = access((store) => store.getItem(key));
+          if (value !== null && value !== undefined) {
+            return value;
+          }
+          return Object.prototype.hasOwnProperty.call(memoryStore, key)
+            ? memoryStore[key]
+            : null;
+        },
+        set(key, value) {
+          const handled = access((store) => {
+            store.setItem(key, value);
+            return true;
+          });
+          if (!handled) {
+            memoryStore[key] = value;
+          }
+        },
+        remove(key) {
+          const handled = access((store) => {
+            store.removeItem(key);
+            return true;
+          });
+          if (!handled) {
+            delete memoryStore[key];
+          }
+        },
+      };
+    }
+
+    const safeSessionStorage = createSafeStorage(() => window.sessionStorage);
+    const safeLocalStorage = createSafeStorage(() => window.localStorage);
+
+    function toUtf8Bytes(text) {
+      if (typeof TextEncoder === "function") {
+        return Array.from(new TextEncoder().encode(text));
+      }
+      const encoded = encodeURIComponent(text);
+      const bytes = [];
+      for (let i = 0; i < encoded.length; i++) {
+        if (encoded[i] === "%" && i + 2 < encoded.length) {
+          bytes.push(parseInt(encoded.slice(i + 1, i + 3), 16));
+          i += 2;
+        } else {
+          bytes.push(encoded.charCodeAt(i));
+        }
+      }
+      return bytes;
+    }
+
+    const SHA_CONSTANTS = (() => {
+      const initialHash = [];
+      const roundConstants = [];
+      const isComposite = {};
+
+      for (let candidate = 2; roundConstants.length < 64; candidate++) {
+        if (!isComposite[candidate]) {
+          if (initialHash.length < 8) {
+            initialHash.push(Math.floor(Math.pow(candidate, 0.5) * 0x100000000));
+          }
+          roundConstants.push(Math.floor(Math.pow(candidate, 1 / 3) * 0x100000000));
+          for (let multiple = candidate * 2; multiple < 313; multiple += candidate) {
+            isComposite[multiple] = true;
+          }
+        }
+      }
+
+      return { initialHash, roundConstants };
+    })();
+
+    function rightRotate(value, amount) {
+      return (value >>> amount) | (value << (32 - amount));
+    }
+
+    function sha256Fallback(text) {
+      const utf8Bytes = toUtf8Bytes(text);
+      let ascii = "";
+      utf8Bytes.forEach((byte) => {
+        ascii += String.fromCharCode(byte);
+      });
+
+      const bitLength = utf8Bytes.length * 8;
+      ascii += "\x80";
+      while (ascii.length % 64 !== 56) {
+        ascii += "\x00";
+      }
+
+      const words = [];
+      for (let i = 0; i < ascii.length; i++) {
+        const code = ascii.charCodeAt(i);
+        words[i >> 2] = words[i >> 2] || 0;
+        words[i >> 2] |= code << ((3 - i) % 4) * 8;
+      }
+
+      words.push(Math.floor(bitLength / Math.pow(2, 32)));
+      words.push(bitLength & 0xffffffff);
+
+      const { initialHash, roundConstants } = SHA_CONSTANTS;
+      const hash = initialHash.slice(0);
+
+      for (let j = 0; j < words.length;) {
+        const w = words.slice(j, (j += 16));
+        for (let i = 16; i < 64; i++) {
+          const s0 =
+            rightRotate(w[i - 15], 7) ^
+            rightRotate(w[i - 15], 18) ^
+            (w[i - 15] >>> 3);
+          const s1 =
+            rightRotate(w[i - 2], 17) ^
+            rightRotate(w[i - 2], 19) ^
+            (w[i - 2] >>> 10);
+          w[i] = (((w[i - 16] + s0) | 0) + ((w[i - 7] + s1) | 0)) | 0;
+        }
+
+        let [a, b, c, d, e, f, g, h] = hash;
+
+        for (let i = 0; i < 64; i++) {
+          const S1 = rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25);
+          const ch = (e & f) ^ (~e & g);
+          const temp1 = (((((h + S1) | 0) + ch) | 0) + roundConstants[i] + w[i]) | 0;
+          const S0 = rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22);
+          const maj = (a & b) ^ (a & c) ^ (b & c);
+          const temp2 = (S0 + maj) | 0;
+
+          h = g;
+          g = f;
+          f = e;
+          e = (d + temp1) | 0;
+          d = c;
+          c = b;
+          b = a;
+          a = (temp1 + temp2) | 0;
+        }
+
+        hash[0] = (hash[0] + a) | 0;
+        hash[1] = (hash[1] + b) | 0;
+        hash[2] = (hash[2] + c) | 0;
+        hash[3] = (hash[3] + d) | 0;
+        hash[4] = (hash[4] + e) | 0;
+        hash[5] = (hash[5] + f) | 0;
+        hash[6] = (hash[6] + g) | 0;
+        hash[7] = (hash[7] + h) | 0;
+      }
+
+      return hash
+        .slice(0, 8)
+        .map((value) => (value >>> 0).toString(16).padStart(8, "0"))
+        .join("");
+    }
+
+    async function digestReleaseCode(text) {
+      const normalized =
+        typeof text.normalize === "function" ? text.normalize("NFC") : text;
+
+      if (window.crypto?.subtle) {
+        try {
+          const data = new Uint8Array(toUtf8Bytes(normalized));
+          const hashBuffer = await window.crypto.subtle.digest("SHA-256", data);
+          return Array.from(new Uint8Array(hashBuffer))
+            .map((b) => b.toString(16).padStart(2, "0"))
+            .join("");
+        } catch (error) {
+          console.warn("Falha no Web Crypto, usando fallback:", error);
+        }
+      }
+
+      return sha256Fallback(normalized);
+    }
+
+    const ACCESS_CODE_HASH = recuperarHash(HASH_SEGMENTS, HASH_PATTERN);
     const ACCESS_KEY = "fincontrol-access";
     const gate = document.getElementById("accessGate");
     const releaseInput = document.getElementById("releaseCode");
     const releaseButton = document.getElementById("releaseButton");
     const accessError = document.getElementById("accessError");
+    const releaseButtonLabel = releaseButton?.textContent?.trim() || "Liberar acesso";
+    let gateProcessing = false;
 
     function desbloquearInterface() {
       document.body.classList.remove("gate-locked");
-      gate.setAttribute("aria-hidden", "true");
+      gate?.setAttribute("aria-hidden", "true");
+    }
+
+    function exibirErro(mensagem) {
+      if (accessError) {
+        accessError.textContent = mensagem || "";
+      }
     }
 
     function focarCampoCodigo() {
-      if (releaseInput) {
-        setTimeout(() => releaseInput.focus(), 80);
+      if (!releaseInput) return;
+      requestAnimationFrame(() => {
+        releaseInput.focus();
+        releaseInput.select();
+      });
+    }
+
+    function toggleProcessamento(ativo) {
+      gateProcessing = ativo;
+      if (releaseButton) {
+        releaseButton.disabled = ativo;
+        releaseButton.textContent = ativo ? "Validando..." : releaseButtonLabel;
       }
     }
 
-    if (sessionStorage.getItem(ACCESS_KEY) === "liberado") {
+    if (safeSessionStorage.get(ACCESS_KEY) === "liberado") {
       desbloquearInterface();
     } else {
-      gate.setAttribute("aria-hidden", "false");
+      gate?.setAttribute("aria-hidden", "false");
       focarCampoCodigo();
     }
 
-    async function gerarHash(texto) {
-      const encoder = new TextEncoder();
-      const dados = encoder.encode(texto);
-      const hashBuffer = await crypto.subtle.digest("SHA-256", dados);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-    }
-
     async function validarCodigo() {
+      if (gateProcessing) return;
       const valor = (releaseInput?.value || "").trim();
       if (!valor) {
-        accessError.textContent = "Informe o código enviado pela equipe.";
+        exibirErro("Informe o código enviado pela equipe.");
+        focarCampoCodigo();
         return;
       }
 
-      const hashValor = await gerarHash(valor);
-      if (hashValor === ACCESS_CODE_HASH) {
-        sessionStorage.setItem(ACCESS_KEY, "liberado");
-        accessError.textContent = "";
-        releaseInput.value = "";
-        desbloquearInterface();
-        return;
+      toggleProcessamento(true);
+      try {
+        const hashValor = await digestReleaseCode(valor);
+        if (hashValor === ACCESS_CODE_HASH) {
+          safeSessionStorage.set(ACCESS_KEY, "liberado");
+          exibirErro("");
+          if (releaseInput) {
+            releaseInput.value = "";
+          }
+          desbloquearInterface();
+        } else {
+          exibirErro("Código inválido. Verifique e tente novamente.");
+        }
+      } catch (error) {
+        console.error("Erro ao validar o código de acesso:", error);
+        exibirErro("Não foi possível validar agora. Atualize a página e tente novamente.");
+      } finally {
+        toggleProcessamento(false);
       }
-
-      accessError.textContent = "Código inválido. Verifique e tente novamente.";
     }
 
-    releaseButton?.addEventListener("click", () => validarCodigo());
+    releaseButton?.addEventListener("click", validarCodigo);
     releaseInput?.addEventListener("keydown", (event) => {
       if (event.key === "Enter") {
         event.preventDefault();
         validarCodigo();
+      }
+    });
+    releaseInput?.addEventListener("input", () => {
+      if (accessError?.textContent) {
+        exibirErro("");
+      }
+    });
+
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden && document.body.classList.contains("gate-locked")) {
+        focarCampoCodigo();
       }
     });
 
@@ -775,15 +1022,20 @@
 
     function carregarDoStorage() {
       try {
-        const dados = localStorage.getItem(STORAGE_KEY);
+        const dados = safeLocalStorage.get(STORAGE_KEY);
         lancamentos = dados ? JSON.parse(dados) : [];
-      } catch (e) {
+      } catch (error) {
+        console.warn("Falha ao ler os lançamentos armazenados:", error);
         lancamentos = [];
       }
     }
 
     function salvarNoStorage() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(lancamentos));
+      try {
+        safeLocalStorage.set(STORAGE_KEY, JSON.stringify(lancamentos));
+      } catch (error) {
+        console.warn("Não foi possível salvar os dados localmente:", error);
+      }
     }
 
     function formatarValor(valor) {
@@ -814,27 +1066,25 @@
 
       const saldo = totalReceitas - totalDespesas;
 
-      totalReceitasEl.textContent = formatarValor(totalReceitas);
-      totalDespesasEl.textContent = formatarValor(totalDespesas);
-      saldoAtualEl.textContent = formatarValor(saldo);
+      if (totalReceitasEl) totalReceitasEl.textContent = formatarValor(totalReceitas);
+      if (totalDespesasEl) totalDespesasEl.textContent = formatarValor(totalDespesas);
+      if (saldoAtualEl) saldoAtualEl.textContent = formatarValor(saldo);
     }
 
     function aplicarFiltro(lista) {
-      const tipo = filtroTipo.value;
+      const tipo = filtroTipo?.value || "todos";
       if (tipo === "todos") return lista;
       return lista.filter((l) => l.tipo === tipo);
     }
 
     function renderizarTabela() {
+      if (!tabela || !estadoVazio) return;
+
       tabela.innerHTML = "";
 
       const listaFiltrada = aplicarFiltro(lancamentos);
 
-      if (listaFiltrada.length === 0) {
-        estadoVazio.style.display = "block";
-      } else {
-        estadoVazio.style.display = "none";
-      }
+      estadoVazio.style.display = listaFiltrada.length === 0 ? "block" : "none";
 
       listaFiltrada.forEach((lanc) => {
         const tr = document.createElement("tr");
@@ -892,18 +1142,18 @@
       renderizarTabela();
     }
 
-    form.addEventListener("submit", (e) => {
+    form?.addEventListener("submit", (e) => {
       e.preventDefault();
 
-      const tipo = document.getElementById("tipo").value;
-      const descricao = document.getElementById("descricao").value.trim();
-      const categoria = document.getElementById("categoria").value.trim();
-      const valorInput = document.getElementById("valor").value;
-      const data = document.getElementById("data").value;
+      const tipo = document.getElementById("tipo")?.value || "receita";
+      const descricao = document.getElementById("descricao")?.value.trim() || "";
+      const categoria = document.getElementById("categoria")?.value.trim() || "";
+      const valorInput = document.getElementById("valor")?.value || "";
+      const data = document.getElementById("data")?.value || "";
 
-      const valor = parseFloat(valorInput);
+      const valor = Number.parseFloat(valorInput.replace(",", "."));
 
-      if (!descricao || !valor || valor <= 0) {
+      if (!descricao || Number.isNaN(valor) || valor <= 0) {
         alert("Preencha descrição e um valor maior que zero.");
         return;
       }
@@ -923,14 +1173,17 @@
       renderizarTabela();
 
       form.reset();
-      document.getElementById("tipo").value = tipo; // mantém o tipo
+      const tipoSelect = document.getElementById("tipo");
+      if (tipoSelect) {
+        tipoSelect.value = tipo;
+      }
     });
 
-    filtroTipo.addEventListener("change", () => {
+    filtroTipo?.addEventListener("change", () => {
       renderizarTabela();
     });
 
-    btnExportar.addEventListener("click", () => {
+    btnExportar?.addEventListener("click", () => {
       if (lancamentos.length === 0) {
         alert("Não há dados para exportar.");
         return;
@@ -947,10 +1200,23 @@
       URL.revokeObjectURL(url);
     });
 
-    // Inicialização
+    window.addEventListener("storage", (event) => {
+      if (event.key === STORAGE_KEY) {
+        try {
+          lancamentos = event.newValue ? JSON.parse(event.newValue) : [];
+        } catch (error) {
+          lancamentos = [];
+        }
+        atualizarResumo();
+        renderizarTabela();
+      }
+    });
+
     carregarDoStorage();
     atualizarResumo();
     renderizarTabela();
   </script>
+
+
 </body>
 </html>
