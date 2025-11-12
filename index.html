@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FinControl - Organize suas finanças</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      background: #020617;
+      color: #e5e7eb;
+      line-height: 1.5;
+    }
+
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .container {
+      width: 92%;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(15,23,42,0.96);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid #1f2937;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 0;
+    }
+
+    .logo {
+      font-weight: 800;
+      font-size: 1.1rem;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+
+    .logo span {
+      color: #22c55e;
+    }
+
+    .nav-tag {
+      font-size: 0.8rem;
+      color: #9ca3af;
+      opacity: 0.9;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 0.6rem 1.3rem;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: 0.2s;
+      text-align: center;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #022c22;
+      box-shadow: 0 18px 30px rgba(34,197,94,0.25);
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.05);
+      transform: translateY(-1px);
+    }
+
+    .btn-outline {
+      border-color: #4b5563;
+      color: #e5e7eb;
+      background: transparent;
+    }
+
+    .btn-outline:hover {
+      border-color: #22c55e;
+      color: #22c55e;
+    }
+
+    /* HERO */
+    .hero {
+      padding: 3.2rem 0 2.5rem;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.1fr);
+      gap: 2.5rem;
+      align-items: center;
+    }
+
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.25rem 0.7rem;
+      border-radius: 999px;
+      border: 1px solid #1f2937;
+      font-size: 0.75rem;
+      color: #9ca3af;
+      margin-bottom: 1rem;
+    }
+
+    .hero-tag span {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 12px rgba(34,197,94,0.8);
+    }
+
+    .hero h1 {
+      font-size: clamp(2.3rem, 4vw, 3.1rem);
+      margin-bottom: 1rem;
+    }
+
+    .hero h1 span {
+      color: #22c55e;
+    }
+
+    .hero p {
+      color: #9ca3af;
+      font-size: 0.98rem;
+      max-width: 34rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-highlight {
+      font-size: 0.85rem;
+      color: #6b7280;
+    }
+
+    .hero-card {
+      background: radial-gradient(circle at top left, #0f172a, #020617);
+      border-radius: 1.5rem;
+      padding: 1.4rem;
+      border: 1px solid #1f2937;
+      box-shadow: 0 20px 40px rgba(15,23,42,0.9);
+    }
+
+    .hero-card h2 {
+      font-size: 1.05rem;
+      margin-bottom: 0.8rem;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.9rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .summary-card {
+      border-radius: 1rem;
+      border: 1px solid #1f2937;
+      padding: 0.8rem 0.9rem;
+      font-size: 0.85rem;
+      background: #020617;
+    }
+
+    .summary-title {
+      color: #9ca3af;
+      margin-bottom: 0.3rem;
+    }
+
+    .summary-value {
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+
+    .summary-income .summary-value {
+      color: #22c55e;
+    }
+
+    .summary-expense .summary-value {
+      color: #f97373;
+    }
+
+    .summary-balance .summary-value {
+      color: #38bdf8;
+    }
+
+    .summary-caption {
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin-top: 0.2rem;
+    }
+
+    .filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      margin-bottom: 1rem;
+      font-size: 0.8rem;
+      color: #9ca3af;
+    }
+
+    .filter-row select {
+      background: #020617;
+      border-radius: 999px;
+      border: 1px solid #1f2937;
+      padding: 0.45rem 0.9rem;
+      color: #e5e7eb;
+      font-size: 0.8rem;
+      outline: none;
+    }
+
+    .filter-row select:focus {
+      border-color: #22c55e;
+      box-shadow: 0 0 0 1px rgba(34,197,94,0.35);
+    }
+
+    /* MAIN SECTION */
+    main {
+      padding-bottom: 3rem;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      gap: 2rem;
+      align-items: flex-start;
+    }
+
+    .card {
+      border-radius: 1.2rem;
+      border: 1px solid #1f2937;
+      background: #020617;
+      padding: 1.3rem;
+    }
+
+    .card-title {
+      font-size: 0.95rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .card-subtitle {
+      font-size: 0.8rem;
+      color: #9ca3af;
+      margin-bottom: 1rem;
+    }
+
+    form {
+      display: grid;
+      gap: 0.8rem;
+    }
+
+    label {
+      font-size: 0.8rem;
+      color: #9ca3af;
+      margin-bottom: 0.15rem;
+      display: block;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 0.6rem 0.7rem;
+      border-radius: 0.7rem;
+      border: 1px solid #1f2937;
+      background: #020617;
+      color: #e5e7eb;
+      font-size: 0.9rem;
+      outline: none;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: #22c55e;
+      box-shadow: 0 0 0 1px rgba(34,197,94,0.35);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.8rem;
+    }
+
+    .info-text {
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin-top: 0.2rem;
+    }
+
+    /* TABLE */
+    .table-wrapper {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+      min-width: 520px;
+    }
+
+    thead {
+      background: #020617;
+    }
+
+    th, td {
+      padding: 0.55rem 0.55rem;
+      text-align: left;
+      border-bottom: 1px solid #1f2937;
+      white-space: nowrap;
+    }
+
+    th {
+      font-size: 0.78rem;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    tbody tr:hover {
+      background: rgba(15,23,42,0.7);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.1rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 500;
+    }
+
+    .badge-income {
+      background: rgba(34,197,94,0.12);
+      color: #4ade80;
+    }
+
+    .badge-expense {
+      background: rgba(239,68,68,0.12);
+      color: #fca5a5;
+    }
+
+    .badge-category {
+      background: rgba(55,65,81,0.7);
+      color: #e5e7eb;
+    }
+
+    .btn-small {
+      padding: 0.25rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      border: 1px solid #4b5563;
+      background: transparent;
+      color: #9ca3af;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .btn-small:hover {
+      border-color: #f97373;
+      color: #fecaca;
+    }
+
+    .empty-state {
+      font-size: 0.8rem;
+      color: #6b7280;
+      padding: 0.6rem 0;
+    }
+
+    footer {
+      border-top: 1px solid #1f2937;
+      padding: 1rem 0 1.5rem;
+      font-size: 0.75rem;
+      color: #6b7280;
+      text-align: center;
+    }
+
+    footer span {
+      color: #9ca3af;
+    }
+
+    /* RESPONSIVO */
+    @media (max-width: 900px) {
+      .hero-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .hero-card {
+        order: -1;
+      }
+
+      .main-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      header {
+        position: static;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .nav {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.4rem;
+      }
+
+      .form-row {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .summary-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container nav">
+      <div>
+        <div class="logo">FIN<span>CONTROL</span></div>
+        <div class="nav-tag">Organize suas finanças em poucos cliques</div>
+      </div>
+      <button class="btn btn-outline" type="button" id="btnExportar">Exportar dados</button>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container hero-grid">
+      <div>
+        <div class="hero-tag">
+          <span></span>
+          Painel financeiro pessoal
+        </div>
+        <h1>Veja para onde <span>seu dinheiro</span> está indo.</h1>
+        <p>
+          Registre suas receitas e despesas, acompanhe o saldo em tempo real
+          e tome decisões melhores com um painel financeiro simples e direto.
+        </p>
+        <div class="hero-actions">
+          <a href="#novo-lancamento" class="btn btn-primary">Começar agora</a>
+          <a href="#lancamentos" class="btn btn-outline">Ver lançamentos</a>
+        </div>
+        <div class="hero-highlight">
+          ✔ Tudo salvo no seu navegador &nbsp;•&nbsp; ✔ Sem cadastro &nbsp;•&nbsp; ✔ Focado na organização
+        </div>
+      </div>
+      <div class="hero-card">
+        <h2>Resumo do mês</h2>
+        <div class="summary-grid">
+          <div class="summary-card summary-income">
+            <div class="summary-title">Receitas</div>
+            <div class="summary-value" id="totalReceitas">R$ 0,00</div>
+            <div class="summary-caption">Entradas cadastradas</div>
+          </div>
+          <div class="summary-card summary-expense">
+            <div class="summary-title">Despesas</div>
+            <div class="summary-value" id="totalDespesas">R$ 0,00</div>
+            <div class="summary-caption">Saídas cadastradas</div>
+          </div>
+          <div class="summary-card summary-balance">
+            <div class="summary-title">Saldo</div>
+            <div class="summary-value" id="saldoAtual">R$ 0,00</div>
+            <div class="summary-caption">Receitas - Despesas</div>
+          </div>
+        </div>
+        <div class="filter-row">
+          <span>Filtrar lançamentos:</span>
+          <select id="filtroTipo">
+            <option value="todos">Todos</option>
+            <option value="receita">Somente receitas</option>
+            <option value="despesa">Somente despesas</option>
+          </select>
+        </div>
+        <div class="info-text">
+          Dica: use categorias como <strong>Alimentação</strong>, <strong>Transporte</strong>, <strong>Lazer</strong>, etc.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <main class="container">
+    <div class="main-grid">
+      <!-- FORMULÁRIO -->
+      <section id="novo-lancamento" class="card">
+        <h2 class="card-title">Novo lançamento</h2>
+        <p class="card-subtitle">
+          Preencha os campos abaixo para adicionar uma receita ou despesa ao seu controle financeiro.
+        </p>
+
+        <form id="formLancamento">
+          <div>
+            <label for="tipo">Tipo</label>
+            <select id="tipo" required>
+              <option value="receita">Receita</option>
+              <option value="despesa">Despesa</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <div>
+              <label for="descricao">Descrição</label>
+              <input type="text" id="descricao" placeholder="Ex.: Salário, Mercado, Uber..." required />
+            </div>
+            <div>
+              <label for="categoria">Categoria</label>
+              <input type="text" id="categoria" placeholder="Ex.: Alimentação, Transporte..." />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div>
+              <label for="valor">Valor (R$)</label>
+              <input type="number" id="valor" step="0.01" min="0.01" placeholder="0,00" required />
+              <div class="info-text">Use ponto para centavos. Ex.: 1200.50</div>
+            </div>
+            <div>
+              <label for="data">Data</label>
+              <input type="date" id="data" />
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary">Adicionar lançamento</button>
+        </form>
+      </section>
+
+      <!-- TABELA -->
+      <section id="lancamentos" class="card">
+        <h2 class="card-title">Lançamentos</h2>
+        <p class="card-subtitle">
+          Acompanhe todos os seus movimentos financeiros em um só lugar.
+        </p>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Tipo</th>
+                <th>Descrição</th>
+                <th>Categoria</th>
+                <th>Data</th>
+                <th>Valor</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tabelaLancamentos">
+              <!-- Linhas geradas via JS -->
+            </tbody>
+          </table>
+        </div>
+        <div class="empty-state" id="estadoVazio">
+          Nenhum lançamento cadastrado ainda. Comece adicionando um na seção ao lado.
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <span>FinControl</span> • Seu painel financeiro simples e objetivo.
+    </div>
+  </footer>
+
+  <script>
+    const STORAGE_KEY = "fincontrol-lancamentos";
+
+    const form = document.getElementById("formLancamento");
+    const tabela = document.getElementById("tabelaLancamentos");
+    const estadoVazio = document.getElementById("estadoVazio");
+    const totalReceitasEl = document.getElementById("totalReceitas");
+    const totalDespesasEl = document.getElementById("totalDespesas");
+    const saldoAtualEl = document.getElementById("saldoAtual");
+    const filtroTipo = document.getElementById("filtroTipo");
+    const btnExportar = document.getElementById("btnExportar");
+
+    let lancamentos = [];
+
+    function carregarDoStorage() {
+      try {
+        const dados = localStorage.getItem(STORAGE_KEY);
+        lancamentos = dados ? JSON.parse(dados) : [];
+      } catch (e) {
+        lancamentos = [];
+      }
+    }
+
+    function salvarNoStorage() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(lancamentos));
+    }
+
+    function formatarValor(valor) {
+      return valor.toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+      });
+    }
+
+    function formatarData(dataStr) {
+      if (!dataStr) return "-";
+      const [ano, mes, dia] = dataStr.split("-");
+      if (!ano || !mes || !dia) return dataStr;
+      return `${dia}/${mes}/${ano}`;
+    }
+
+    function atualizarResumo() {
+      let totalReceitas = 0;
+      let totalDespesas = 0;
+
+      lancamentos.forEach((l) => {
+        if (l.tipo === "receita") {
+          totalReceitas += l.valor;
+        } else {
+          totalDespesas += l.valor;
+        }
+      });
+
+      const saldo = totalReceitas - totalDespesas;
+
+      totalReceitasEl.textContent = formatarValor(totalReceitas);
+      totalDespesasEl.textContent = formatarValor(totalDespesas);
+      saldoAtualEl.textContent = formatarValor(saldo);
+    }
+
+    function aplicarFiltro(lista) {
+      const tipo = filtroTipo.value;
+      if (tipo === "todos") return lista;
+      return lista.filter((l) => l.tipo === tipo);
+    }
+
+    function renderizarTabela() {
+      tabela.innerHTML = "";
+
+      const listaFiltrada = aplicarFiltro(lancamentos);
+
+      if (listaFiltrada.length === 0) {
+        estadoVazio.style.display = "block";
+      } else {
+        estadoVazio.style.display = "none";
+      }
+
+      listaFiltrada.forEach((lanc) => {
+        const tr = document.createElement("tr");
+
+        const tdTipo = document.createElement("td");
+        const badge = document.createElement("span");
+        badge.classList.add("badge");
+        if (lanc.tipo === "receita") {
+          badge.classList.add("badge-income");
+          badge.textContent = "Receita";
+        } else {
+          badge.classList.add("badge-expense");
+          badge.textContent = "Despesa";
+        }
+        tdTipo.appendChild(badge);
+
+        const tdDesc = document.createElement("td");
+        tdDesc.textContent = lanc.descricao || "-";
+
+        const tdCat = document.createElement("td");
+        const catBadge = document.createElement("span");
+        catBadge.classList.add("badge", "badge-category");
+        catBadge.textContent = lanc.categoria || "Sem categoria";
+        tdCat.appendChild(catBadge);
+
+        const tdData = document.createElement("td");
+        tdData.textContent = formatarData(lanc.data);
+
+        const tdValor = document.createElement("td");
+        tdValor.textContent = formatarValor(lanc.valor);
+
+        const tdAcoes = document.createElement("td");
+        const btnDel = document.createElement("button");
+        btnDel.textContent = "Excluir";
+        btnDel.classList.add("btn-small");
+        btnDel.addEventListener("click", () => removerLancamento(lanc.id));
+        tdAcoes.appendChild(btnDel);
+
+        tr.appendChild(tdTipo);
+        tr.appendChild(tdDesc);
+        tr.appendChild(tdCat);
+        tr.appendChild(tdData);
+        tr.appendChild(tdValor);
+        tr.appendChild(tdAcoes);
+
+        tabela.appendChild(tr);
+      });
+    }
+
+    function removerLancamento(id) {
+      if (!confirm("Deseja realmente excluir este lançamento?")) return;
+      lancamentos = lancamentos.filter((l) => l.id !== id);
+      salvarNoStorage();
+      atualizarResumo();
+      renderizarTabela();
+    }
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const tipo = document.getElementById("tipo").value;
+      const descricao = document.getElementById("descricao").value.trim();
+      const categoria = document.getElementById("categoria").value.trim();
+      const valorInput = document.getElementById("valor").value;
+      const data = document.getElementById("data").value;
+
+      const valor = parseFloat(valorInput);
+
+      if (!descricao || !valor || valor <= 0) {
+        alert("Preencha descrição e um valor maior que zero.");
+        return;
+      }
+
+      const novoLanc = {
+        id: Date.now(),
+        tipo,
+        descricao,
+        categoria,
+        valor,
+        data: data || new Date().toISOString().slice(0, 10),
+      };
+
+      lancamentos.unshift(novoLanc);
+      salvarNoStorage();
+      atualizarResumo();
+      renderizarTabela();
+
+      form.reset();
+      document.getElementById("tipo").value = tipo; // mantém o tipo
+    });
+
+    filtroTipo.addEventListener("change", () => {
+      renderizarTabela();
+    });
+
+    btnExportar.addEventListener("click", () => {
+      if (lancamentos.length === 0) {
+        alert("Não há dados para exportar.");
+        return;
+      }
+      const dados = JSON.stringify(lancamentos, null, 2);
+      const blob = new Blob([dados], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "fincontrol-export.json";
+      a.click();
+
+      URL.revokeObjectURL(url);
+    });
+
+    // Inicialização
+    carregarDoStorage();
+    atualizarResumo();
+    renderizarTabela();
+  </script>
+</body>
+</html>
