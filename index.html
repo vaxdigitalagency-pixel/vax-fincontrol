@@ -537,7 +537,7 @@
     <div class="access-card" role="alertdialog" aria-labelledby="gateTitle" aria-describedby="gateDescription">
       <h2 id="gateTitle">Acesso negado</h2>
       <p id="gateDescription">
-        Informe o código de liberação fornecido pela Equipe VAX para visualizar seu painel financeiro.
+        Área confidencial: somente quem recebeu o token privado diretamente da Equipe VAX pode desbloquear o painel.
       </p>
       <input
         type="password"
@@ -549,7 +549,7 @@
       <button type="button" class="access-btn" id="releaseButton">Liberar acesso</button>
       <div class="access-error" id="accessError" aria-live="assertive"></div>
       <p class="info-text" style="margin-top: 0.5rem;">
-        Somente a Equipe VAX fornece o token de acesso por canais seguros. Nenhum código é exibido ou registrado nesta página.
+        A equipe libera o acesso de forma privada — o código válido não aparece nesta tela nem fica registrado em texto simples.
       </p>
     </div>
   </div>
@@ -691,9 +691,16 @@
   </footer>
 
   <script>
-    const HASH_MASK = 0xaa;
-    const ENCODED_HASH_BYTES = [151, 221, 211, 222, 252, 153, 219, 75, 116, 255, 159, 62, 26, 134, 53, 14, 200, 127, 38, 254, 154, 93, 70, 7, 35, 47, 61, 204, 172, 190, 61, 16];
-    const ACCESS_CODE_HASH = ENCODED_HASH_BYTES.map((byte) => (byte ^ HASH_MASK).toString(16).padStart(2, "0")).join("");
+    const HASH_PATTERN = [0xaa, 0x55, 0xee, 0x11];
+    const HASH_PAYLOAD = "lyKXZfxmn/B0ANuFGnlxtciAYkWaogK8I9B5d6xBeas=";
+
+    function recuperarHash(payload) {
+      const binary = typeof atob === "function" ? atob(payload) : Buffer.from(payload, "base64").toString("binary");
+      const bytes = Array.from(binary, (char, index) => char.charCodeAt(0) ^ HASH_PATTERN[index % HASH_PATTERN.length]);
+      return bytes.map((byte) => byte.toString(16).padStart(2, "0")).join("");
+    }
+
+    const ACCESS_CODE_HASH = recuperarHash(HASH_PAYLOAD);
     const ACCESS_KEY = "fincontrol-access";
     const gate = document.getElementById("accessGate");
     const releaseInput = document.getElementById("releaseCode");
