@@ -9,9 +9,6 @@
     :root {
       color-scheme: dark;
       --bg-body: #020617;
-      --bg-surface: #020617;
-      --bg-card: #020617;
-      --bg-elevated: #020617;
       --accent: #22c55e;
       --accent-soft: #4ade80;
       --accent-blue: #38bdf8;
@@ -38,7 +35,7 @@
       background:
         radial-gradient(circle at 0% 0%, #22c55e11, transparent 55%),
         radial-gradient(circle at 100% 100%, #38bdf811, transparent 55%),
-        #020617;
+        var(--bg-body);
       color: var(--text-main);
     }
 
@@ -51,12 +48,7 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-    }
-
-    .app-shell.is-locked {
-      filter: blur(6px);
-      pointer-events: none;
-      user-select: none;
+      display: none; /* só mostra depois do código */
     }
 
     .container {
@@ -489,7 +481,7 @@
       text-align: center;
     }
 
-    /* COLUNA VAX / INSIGHTS */
+    /* INSIGHTS + PROPAGANDA VAX */
 
     .panel-insights {
       margin-top: 1.75rem;
@@ -564,7 +556,7 @@
 
     /* GATE DE ASSINANTE */
 
-    .access-gate {
+    #gate-section {
       position: fixed;
       inset: 0;
       z-index: 50;
@@ -578,7 +570,7 @@
       transition: opacity 0.25s ease, visibility 0.25s ease;
     }
 
-    .access-gate.is-hidden {
+    #gate-section.is-hidden {
       opacity: 0;
       visibility: hidden;
       pointer-events: none;
@@ -720,28 +712,28 @@
 </head>
 <body>
   <!-- GATE DE ASSINANTE -->
-  <section id="accessGate" class="access-gate" aria-hidden="false">
-    <div class="access-card" role="dialog" aria-labelledby="gateTitle" aria-describedby="gateDescription">
+  <section id="gate-section">
+    <div class="access-card">
       <div class="access-logo">V</div>
-      <h2 id="gateTitle" class="access-title">Acesso de assinante</h2>
-      <p id="gateDescription" class="access-text">
+      <h2 class="access-title">Acesso de assinante</h2>
+      <p class="access-text">
         Digite o <strong>código de liberação</strong> enviado pela VAX Web Studio
         para desbloquear seu painel FinControl.
       </p>
 
       <input
-        id="accessCodeInput"
+        id="access-code"
         class="access-input"
         type="password"
-        placeholder="Ex: VAX-K1-XXXXXXXXXXXX"
+        placeholder="Ex: G9X3-PQ12-Z7LM-84B"
         autocomplete="off"
       />
 
-      <div id="accessError" class="access-error"></div>
+      <div id="gate-error" class="access-error"></div>
 
       <div class="access-footer">
         <p class="access-hint">Códigos diferenciam maiúsculas e minúsculas.</p>
-        <button id="unlockButton" class="access-btn" type="button">
+        <button id="access-btn" class="access-btn" type="button">
           <span>🔓</span>
           Liberar acesso
         </button>
@@ -749,8 +741,8 @@
     </div>
   </section>
 
-  <!-- APP -->
-  <div id="appShell" class="app-shell is-locked">
+  <!-- APP COMPLETO -->
+  <div id="appShell" class="app-shell">
     <header class="topbar">
       <div class="topbar-inner">
         <div class="brand">
@@ -950,25 +942,24 @@
               <p><span class="insight-label">Maior categoria de despesa:</span> <span id="insightMaiorCategoria">—</span></p>
               <p><span class="insight-label">Total de lançamentos:</span> <span id="insightTotalLancamentos">0</span></p>
               <p><span class="insight-label">Último lançamento:</span> <span id="insightUltimoLancamento">—</span></p>
-              <p><span class="insight-label">Situação geral:</span> <span id="insightSituacao">Aguardando dados...</span></p>
+              <p><span class="insight-label">Situação geral:</span> <span id="insightSituacao">Aguardando seus primeiros dados...</span></p>
             </div>
           </section>
 
           <section class="vax-promo">
             <p class="vax-promo-badge">VAX WEB STUDIO • DIGITAL</p>
-            <h3 class="vax-promo-title">Precisando de mais soluções digitais?</h3>
+            <h3 class="vax-promo-title">Precisa ir além?</h3>
             <p class="vax-promo-text">
               O FinControl foi desenvolvido pela <strong>VAX Web Studio</strong>.
-              Se você gostou deste painel, imagine o que a VAX pode criar para
-              o seu negócio: sites completos, páginas de venda, áreas de membros
-              e sistemas sob medida.
+              Se você gostou deste painel, imagine ter um site completo,
+              página de vendas ou área de membros feita sob medida.
             </p>
             <p class="vax-promo-cta">
               Continue usando o FinControl e, quando quiser dar o próximo passo,
               fale com a VAX para evoluir seu projeto digital. 🚀
             </p>
             <p class="vax-promo-text">
-              Contato: procure por <strong>VAX Web Studio</strong> nas redes sociais.
+              Procure por <strong>VAX Web Studio</strong> nas redes sociais.
             </p>
           </section>
         </section>
@@ -978,7 +969,7 @@
     <footer>
       <div class="container">
         <p>
-          VAX FinControl – desenvolvido por VAX Web Studio. Este painel é exclusivo
+          VAX FinControl – desenvolvido por VAX Web Studio. Painel exclusivo
           para clientes assinantes.
         </p>
       </div>
@@ -989,81 +980,66 @@
     /************************************************
      * SISTEMA DE CÓDIGO DE ASSINANTE
      ************************************************/
-    const ACCESS_CODE = "VAX-K1-9F3A7C2E8Q1L4"; // código que você passa para quem pagou
-    const ACCESS_STORAGE_KEY = "vax_fincontrol_access_v3";
+    const VALID_CODE = "G9X3-PQ12-Z7LM-84B"; // SENHA FORTE
+    const ACCESS_STORAGE_KEY = "vax_fincontrol_access_v4";
 
-    const gateEl = document.getElementById("accessGate");
-    const appShellEl = document.getElementById("appShell");
-    const accessCodeInput = document.getElementById("accessCodeInput");
-    const accessErrorEl = document.getElementById("accessError");
-    const unlockButton = document.getElementById("unlockButton");
+    const gate = document.getElementById("gate-section");
+    const appShell = document.getElementById("appShell");
+    const codeInput = document.getElementById("access-code");
+    const gateError = document.getElementById("gate-error");
+    const accessBtn = document.getElementById("access-btn");
 
-    function isUnlocked() {
+    function showApp() {
+      gate.classList.add("is-hidden");
+      appShell.style.display = "flex";
+      document.body.style.overflow = "";
+    }
+
+    function checkStoredAccess() {
       try {
-        return localStorage.getItem(ACCESS_STORAGE_KEY) === "unlocked";
+        return localStorage.getItem(ACCESS_STORAGE_KEY) === "ok";
       } catch {
         return false;
       }
     }
 
-    function saveUnlock() {
+    function saveAccess() {
       try {
-        localStorage.setItem(ACCESS_STORAGE_KEY, "unlocked");
+        localStorage.setItem(ACCESS_STORAGE_KEY, "ok");
       } catch {
         // ignore
       }
     }
 
-    function showGate() {
-      gateEl.classList.remove("is-hidden");
-      appShellEl.classList.add("is-locked");
-      document.body.style.overflow = "hidden";
-      accessCodeInput.focus();
-    }
-
-    function hideGate() {
-      gateEl.classList.add("is-hidden");
-      appShellEl.classList.remove("is-locked");
-      document.body.style.overflow = "";
-    }
-
-    function validateAccessCode(code) {
-      return code.trim() === ACCESS_CODE;
-    }
-
-    function handleUnlock() {
-      const code = accessCodeInput.value.trim();
-
+    function tryUnlock() {
+      const code = codeInput.value.trim();
       if (!code) {
-        accessErrorEl.textContent = "Digite o código de acesso.";
+        gateError.textContent = "Digite o código de acesso.";
         return;
       }
-
-      if (!validateAccessCode(code)) {
-        accessErrorEl.textContent =
-          "Código inválido. Verifique com a VAX se digitou corretamente.";
-        accessCodeInput.value = "";
-        accessCodeInput.focus();
+      if (code !== VALID_CODE) {
+        gateError.textContent = "Código inválido. Verifique com a VAX.";
+        codeInput.value = "";
+        codeInput.focus();
         return;
       }
-
-      accessErrorEl.textContent = "";
-      saveUnlock();
-      hideGate();
+      gateError.textContent = "";
+      saveAccess();
+      showApp();
     }
 
-    unlockButton.addEventListener("click", handleUnlock);
-    accessCodeInput.addEventListener("keydown", (e) => {
+    accessBtn.addEventListener("click", tryUnlock);
+    codeInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
-        handleUnlock();
+        tryUnlock();
       }
     });
 
     /************************************************
      * PAINEL FINANCEIRO
      ************************************************/
-    const STORAGE_KEY = "vax_fincontrol_lancamentos_v3";
+    const STORAGE_KEY = "vax_fincontrol_lancamentos_v4";
 
     const entryForm = document.getElementById("entryForm");
     const tableBody = document.getElementById("entryTableBody");
@@ -1160,7 +1136,6 @@
         return;
       }
 
-      // maior categoria de despesa
       const gastosPorCategoria = {};
       for (const item of lancamentos) {
         if (item.tipo !== "despesa") continue;
@@ -1178,13 +1153,11 @@
       }
       insightMaiorCategoria.textContent = maiorCategoria;
 
-      // último lançamento
       const ultimo = lancamentos[lancamentos.length - 1];
       insightUltimoLancamento.textContent = `${ultimo.tipo === "receita" ? "Receita" : "Despesa"} em ${
         ultimo.categoria || "Sem categoria"
       } (${formatCurrency(ultimo.valor)})`;
 
-      // situação geral
       let totalReceitas = 0;
       let totalDespesas = 0;
       for (const item of lancamentos) {
@@ -1285,7 +1258,7 @@
       updateInsights();
       renderTable();
       entryForm.reset();
-      document.getElementById("tipo").value = tipo; // mantém o tipo selecionado
+      document.getElementById("tipo").value = tipo;
     }
 
     function removeEntry(id) {
@@ -1363,15 +1336,7 @@
       });
     }
 
-    function init() {
-      // Gate
-      if (isUnlocked()) {
-        hideGate();
-      } else {
-        showGate();
-      }
-
-      // Painel
+    function initApp() {
       loadFromStorage();
       updateSummary();
       updateInsights();
@@ -1379,7 +1344,17 @@
       setupListeners();
     }
 
-    document.addEventListener("DOMContentLoaded", init);
+    document.addEventListener("DOMContentLoaded", () => {
+      // Liberação
+      if (checkStoredAccess()) {
+        showApp();
+      } else {
+        document.body.style.overflow = "hidden";
+      }
+
+      // App
+      initApp();
+    });
   </script>
 </body>
 </html>
