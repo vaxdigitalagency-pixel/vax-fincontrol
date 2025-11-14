@@ -18,10 +18,6 @@
       line-height: 1.5;
     }
 
-    body.gate-locked {
-      overflow: hidden;
-    }
-
     a {
       text-decoration: none;
       color: inherit;
@@ -404,95 +400,6 @@
       color: #9ca3af;
     }
 
-    /* PORTÃO DE ACESSO */
-    .access-gate {
-      position: fixed;
-      inset: 0;
-      background: rgba(2, 6, 23, 0.96);
-      backdrop-filter: blur(4px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 2rem;
-      transition: opacity 0.3s ease;
-      opacity: 0;
-      pointer-events: none;
-      z-index: 999;
-    }
-
-    body.gate-locked .access-gate {
-      opacity: 1;
-      pointer-events: all;
-    }
-
-    .access-card {
-      width: min(420px, 100%);
-      border-radius: 1.2rem;
-      border: 1px solid #1f2937;
-      background: linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(2, 6, 23, 0.98));
-      padding: 2rem;
-      text-align: center;
-      box-shadow: 0 30px 80px rgba(2, 6, 23, 0.8);
-    }
-
-    .access-card h2 {
-      font-size: 1.4rem;
-      margin-bottom: 0.75rem;
-    }
-
-    .access-card p {
-      color: #9ca3af;
-      font-size: 0.92rem;
-      margin-bottom: 1.4rem;
-    }
-
-    .access-input {
-      width: 100%;
-      padding: 0.85rem 1rem;
-      border-radius: 0.9rem;
-      border: 1px solid #1f2937;
-      background: rgba(2, 6, 23, 0.85);
-      color: #e5e7eb;
-      font-size: 1rem;
-      margin-bottom: 0.9rem;
-    }
-
-    .access-input:focus {
-      border-color: #22c55e;
-      box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.35);
-    }
-
-    .access-btn {
-      width: 100%;
-      padding: 0.85rem 1rem;
-      border-radius: 0.9rem;
-      border: none;
-      background: linear-gradient(135deg, #22c55e, #16a34a);
-      color: #02130c;
-      font-weight: 600;
-      font-size: 0.95rem;
-      cursor: pointer;
-      transition: transform 0.2s ease;
-    }
-
-    .access-btn:hover {
-      transform: translateY(-1px);
-    }
-
-    .access-btn:disabled {
-      opacity: 0.65;
-      cursor: not-allowed;
-      transform: none;
-      filter: saturate(0.7);
-    }
-
-    .access-error {
-      color: #f97373;
-      font-size: 0.8rem;
-      margin-top: 0.8rem;
-      min-height: 1.1rem;
-    }
-
     /* RESPONSIVO */
     @media (max-width: 900px) {
       .hero-grid {
@@ -529,7 +436,7 @@
     }
   </style>
 </head>
-<body class="gate-locked">
+<body>
   <header>
     <div class="container nav">
       <div>
@@ -539,27 +446,6 @@
       <button class="btn btn-outline" type="button" id="btnExportar">Exportar dados</button>
     </div>
   </header>
-
-  <div id="accessGate" class="access-gate" aria-hidden="false">
-    <div class="access-card" role="alertdialog" aria-labelledby="gateTitle" aria-describedby="gateDescription">
-      <h2 id="gateTitle">Acesso negado</h2>
-      <p id="gateDescription">
-        Área confidencial: somente quem recebeu o token privado diretamente da Equipe VAX pode desbloquear o painel.
-      </p>
-      <input
-        type="password"
-        id="releaseCode"
-        class="access-input"
-        placeholder="Digite o código de liberação"
-        autocomplete="off"
-      />
-      <button type="button" class="access-btn" id="releaseButton">Liberar acesso</button>
-      <div class="access-error" id="accessError" aria-live="assertive"></div>
-      <p class="info-text" style="margin-top: 0.5rem;">
-        A equipe libera o acesso de forma privada — o código válido não aparece nesta tela nem fica registrado em texto simples.
-      </p>
-    </div>
-  </div>
 
   <section class="hero">
     <div class="container hero-grid">
@@ -698,27 +584,6 @@
   </footer>
 
   <script>
-    const HASH_PATTERN = [0xaa, 0x55, 0xee, 0x11];
-    const HASH_SEGMENTS = [
-      "h0r19o7dKU",
-      "S+yVdtb4Z8",
-      "0plq5CbNPz",
-      "/akFuiq0B0",
-      "WMk=",
-    ];
-
-    function recuperarHash(parts, pattern) {
-      const payload = parts.join("");
-      const binary =
-        typeof atob === "function"
-          ? atob(payload)
-          : Buffer.from(payload, "base64").toString("binary");
-      const bytes = Array.from(binary, (char, index) =>
-        char.charCodeAt(0) ^ pattern[index % pattern.length]
-      );
-      return bytes.map((byte) => byte.toString(16).padStart(2, "0")).join("");
-    }
-
     function createSafeStorage(getter) {
       const memoryStore = {};
       let storageRef = null;
@@ -776,237 +641,7 @@
       };
     }
 
-    const safeSessionStorage = createSafeStorage(() => window.sessionStorage);
     const safeLocalStorage = createSafeStorage(() => window.localStorage);
-
-    function toUtf8Bytes(text) {
-      if (typeof TextEncoder === "function") {
-        return Array.from(new TextEncoder().encode(text));
-      }
-      const encoded = encodeURIComponent(text);
-      const bytes = [];
-      for (let i = 0; i < encoded.length; i++) {
-        if (encoded[i] === "%" && i + 2 < encoded.length) {
-          bytes.push(parseInt(encoded.slice(i + 1, i + 3), 16));
-          i += 2;
-        } else {
-          bytes.push(encoded.charCodeAt(i));
-        }
-      }
-      return bytes;
-    }
-
-    const SHA_CONSTANTS = (() => {
-      const initialHash = [];
-      const roundConstants = [];
-      const isComposite = {};
-
-      for (let candidate = 2; roundConstants.length < 64; candidate++) {
-        if (!isComposite[candidate]) {
-          if (initialHash.length < 8) {
-            initialHash.push(Math.floor(Math.pow(candidate, 0.5) * 0x100000000));
-          }
-          roundConstants.push(Math.floor(Math.pow(candidate, 1 / 3) * 0x100000000));
-          for (let multiple = candidate * 2; multiple < 313; multiple += candidate) {
-            isComposite[multiple] = true;
-          }
-        }
-      }
-
-      return { initialHash, roundConstants };
-    })();
-
-    function rightRotate(value, amount) {
-      return (value >>> amount) | (value << (32 - amount));
-    }
-
-    function sha256Fallback(text) {
-      const utf8Bytes = toUtf8Bytes(text);
-      let ascii = "";
-      utf8Bytes.forEach((byte) => {
-        ascii += String.fromCharCode(byte);
-      });
-
-      const bitLength = utf8Bytes.length * 8;
-      ascii += "\x80";
-      while (ascii.length % 64 !== 56) {
-        ascii += "\x00";
-      }
-
-      const words = [];
-      for (let i = 0; i < ascii.length; i++) {
-        const code = ascii.charCodeAt(i);
-        words[i >> 2] = words[i >> 2] || 0;
-        words[i >> 2] |= code << ((3 - i) % 4) * 8;
-      }
-
-      words.push(Math.floor(bitLength / Math.pow(2, 32)));
-      words.push(bitLength & 0xffffffff);
-
-      const { initialHash, roundConstants } = SHA_CONSTANTS;
-      const hash = initialHash.slice(0);
-
-      for (let j = 0; j < words.length;) {
-        const w = words.slice(j, (j += 16));
-        for (let i = 16; i < 64; i++) {
-          const s0 =
-            rightRotate(w[i - 15], 7) ^
-            rightRotate(w[i - 15], 18) ^
-            (w[i - 15] >>> 3);
-          const s1 =
-            rightRotate(w[i - 2], 17) ^
-            rightRotate(w[i - 2], 19) ^
-            (w[i - 2] >>> 10);
-          w[i] = (((w[i - 16] + s0) | 0) + ((w[i - 7] + s1) | 0)) | 0;
-        }
-
-        let [a, b, c, d, e, f, g, h] = hash;
-
-        for (let i = 0; i < 64; i++) {
-          const S1 = rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25);
-          const ch = (e & f) ^ (~e & g);
-          const temp1 = (((((h + S1) | 0) + ch) | 0) + roundConstants[i] + w[i]) | 0;
-          const S0 = rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22);
-          const maj = (a & b) ^ (a & c) ^ (b & c);
-          const temp2 = (S0 + maj) | 0;
-
-          h = g;
-          g = f;
-          f = e;
-          e = (d + temp1) | 0;
-          d = c;
-          c = b;
-          b = a;
-          a = (temp1 + temp2) | 0;
-        }
-
-        hash[0] = (hash[0] + a) | 0;
-        hash[1] = (hash[1] + b) | 0;
-        hash[2] = (hash[2] + c) | 0;
-        hash[3] = (hash[3] + d) | 0;
-        hash[4] = (hash[4] + e) | 0;
-        hash[5] = (hash[5] + f) | 0;
-        hash[6] = (hash[6] + g) | 0;
-        hash[7] = (hash[7] + h) | 0;
-      }
-
-      return hash
-        .slice(0, 8)
-        .map((value) => (value >>> 0).toString(16).padStart(8, "0"))
-        .join("");
-    }
-
-    async function digestReleaseCode(text) {
-      const normalized =
-        typeof text.normalize === "function" ? text.normalize("NFC") : text;
-
-      if (window.crypto?.subtle) {
-        try {
-          const data = new Uint8Array(toUtf8Bytes(normalized));
-          const hashBuffer = await window.crypto.subtle.digest("SHA-256", data);
-          return Array.from(new Uint8Array(hashBuffer))
-            .map((b) => b.toString(16).padStart(2, "0"))
-            .join("");
-        } catch (error) {
-          console.warn("Falha no Web Crypto, usando fallback:", error);
-        }
-      }
-
-      return sha256Fallback(normalized);
-    }
-
-    const ACCESS_CODE_HASH = recuperarHash(HASH_SEGMENTS, HASH_PATTERN);
-    const ACCESS_KEY = "fincontrol-access";
-    const gate = document.getElementById("accessGate");
-    const releaseInput = document.getElementById("releaseCode");
-    const releaseButton = document.getElementById("releaseButton");
-    const accessError = document.getElementById("accessError");
-    const releaseButtonLabel = releaseButton?.textContent?.trim() || "Liberar acesso";
-    let gateProcessing = false;
-
-    function desbloquearInterface() {
-      document.body.classList.remove("gate-locked");
-      gate?.setAttribute("aria-hidden", "true");
-    }
-
-    function exibirErro(mensagem) {
-      if (accessError) {
-        accessError.textContent = mensagem || "";
-      }
-    }
-
-    function focarCampoCodigo() {
-      if (!releaseInput) return;
-      requestAnimationFrame(() => {
-        releaseInput.focus();
-        releaseInput.select();
-      });
-    }
-
-    function toggleProcessamento(ativo) {
-      gateProcessing = ativo;
-      if (releaseButton) {
-        releaseButton.disabled = ativo;
-        releaseButton.textContent = ativo ? "Validando..." : releaseButtonLabel;
-      }
-    }
-
-    if (safeSessionStorage.get(ACCESS_KEY) === "liberado") {
-      desbloquearInterface();
-    } else {
-      gate?.setAttribute("aria-hidden", "false");
-      focarCampoCodigo();
-    }
-
-    async function validarCodigo() {
-      if (gateProcessing) return;
-      const valor = (releaseInput?.value || "").trim();
-      if (!valor) {
-        exibirErro("Informe o código enviado pela equipe.");
-        focarCampoCodigo();
-        return;
-      }
-
-      toggleProcessamento(true);
-      try {
-        const hashValor = await digestReleaseCode(valor);
-        if (hashValor === ACCESS_CODE_HASH) {
-          safeSessionStorage.set(ACCESS_KEY, "liberado");
-          exibirErro("");
-          if (releaseInput) {
-            releaseInput.value = "";
-          }
-          desbloquearInterface();
-        } else {
-          exibirErro("Código inválido. Verifique e tente novamente.");
-        }
-      } catch (error) {
-        console.error("Erro ao validar o código de acesso:", error);
-        exibirErro("Não foi possível validar agora. Atualize a página e tente novamente.");
-      } finally {
-        toggleProcessamento(false);
-      }
-    }
-
-    releaseButton?.addEventListener("click", validarCodigo);
-    releaseInput?.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        validarCodigo();
-      }
-    });
-    releaseInput?.addEventListener("input", () => {
-      if (accessError?.textContent) {
-        exibirErro("");
-      }
-    });
-
-    document.addEventListener("visibilitychange", () => {
-      if (!document.hidden && document.body.classList.contains("gate-locked")) {
-        focarCampoCodigo();
-      }
-    });
-
     const STORAGE_KEY = "fincontrol-lancamentos";
 
     const form = document.getElementById("formLancamento");
