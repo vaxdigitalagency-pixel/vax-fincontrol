@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VAX FinControl - Painel Financeiro</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg-body: #050816;
+      --bg-surface: #0b1020;
+      --bg-surface-soft: #111827;
+      --bg-card-highlight: rgba(34, 197, 94, 0.1);
+      --accent: #22c55e;
+      --accent-soft: #4ade80;
+      --danger: #ef4444;
+      --text-primary: #f9fafb;
+      --text-muted: #9ca3af;
+      --border-subtle: rgba(148, 163, 184, 0.4);
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.85);
+      --blur: 18px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+      background: radial-gradient(circle at 0% 0%, #22c55e11, transparent 55%),
+        radial-gradient(circle at 100% 100%, #3b82f611, transparent 55%),
+        var(--bg-body);
+      color: var(--text-primary);
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .app-shell {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .container {
+      width: min(1120px, 100%);
+      margin: 0 auto;
+      padding: 0 1.25rem 3rem;
+    }
+
+    /* HEADER / LOGO */
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(var(--blur));
+      background: linear-gradient(
+          to bottom,
+          rgba(15, 23, 42, 0.95),
+          rgba(15, 23, 42, 0.7),
+          transparent
+        );
+      border-bottom: 1px solid rgba(31, 41, 55, 0.7);
+    }
+
+    .topbar-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1rem 1.25rem 0.85rem;
+      margin: 0 auto;
+      width: min(1120px, 100%);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 30%, #bbf7d0, #16a34a);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 0.9rem;
+      color: #022c22;
+      box-shadow: 0 10px 30px rgba(34, 197, 94, 0.45);
+    }
+
+    .brand-text-main {
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      font-size: 0.82rem;
+    }
+
+    .brand-text-main span {
+      color: var(--accent);
+    }
+
+    .brand-subtitle {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .pill {
+      padding: 0.4rem 0.7rem;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+    }
+
+    .pill-accent {
+      border-color: rgba(34, 197, 94, 0.6);
+      background: linear-gradient(90deg, #22c55e33, transparent);
+      color: var(--accent-soft);
+    }
+
+    .btn-primary {
+      padding: 0.6rem 1.1rem;
+      border-radius: 999px;
+      border: none;
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #022c22;
+      box-shadow: 0 12px 30px rgba(34, 197, 94, 0.45);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .btn-primary span {
+      font-size: 1rem;
+    }
+
+    .btn-primary:active {
+      transform: translateY(1px) scale(0.99);
+      box-shadow: 0 8px 20px rgba(34, 197, 94, 0.6);
+    }
+
+    .btn-ghost {
+      padding: 0.55rem 1rem;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      background: rgba(15, 23, 42, 0.6);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .btn-ghost:active {
+      transform: translateY(1px);
+    }
+
+    /* HERO / INTRO */
+
+    main {
+      flex: 1;
+    }
+
+    .intro {
+      margin-top: 1.5rem;
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr);
+      gap: 1.75rem;
+      align-items: center;
+    }
+
+    .intro-title {
+      font-size: clamp(1.7rem, 1.6rem + 0.8vw, 2rem);
+      line-height: 1.2;
+      margin-bottom: 0.5rem;
+    }
+
+    .intro-title span {
+      color: var(--accent);
+    }
+
+    .intro-text {
+      color: var(--text-muted);
+      font-size: 0.92rem;
+    }
+
+    .intro-highlight {
+      margin-top: 0.9rem;
+      padding: 0.75rem 0.9rem;
+      border-radius: var(--radius-md);
+      background: rgba(34, 197, 94, 0.08);
+      border: 1px solid rgba(34, 197, 94, 0.35);
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #bbf7d0;
+    }
+
+    .intro-highlight span {
+      font-size: 1.1rem;
+    }
+
+    .summary-card-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.9rem;
+    }
+
+    .summary-card {
+      border-radius: var(--radius-md);
+      background: linear-gradient(
+        145deg,
+        rgba(15, 23, 42, 0.9),
+        rgba(15, 23, 42, 0.7)
+      );
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      padding: 0.9rem;
+      box-shadow: var(--shadow-soft);
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .summary-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .summary-value {
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+
+    .summary-pill {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .summary-income .summary-value {
+      color: #4ade80;
+    }
+
+    .summary-expense .summary-value {
+      color: #f97373;
+    }
+
+    .summary-balance .summary-value {
+      color: #38bdf8;
+    }
+
+    /* LAYOUT PRINCIPAL */
+
+    .layout-columns {
+      margin-top: 2rem;
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 2fr);
+      gap: 1.75rem;
+      align-items: flex-start;
+    }
+
+    .panel {
+      border-radius: var(--radius-lg);
+      background: rgba(15, 23, 42, 0.92);
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      box-shadow: var(--shadow-soft);
+      padding: 1.25rem 1.2rem 1.3rem;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.9rem;
+      gap: 1rem;
+    }
+
+    .panel-title {
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    .panel-subtitle {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 0.1rem;
+    }
+
+    /* FORM NOVO LANÇAMENTO */
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem;
+      margin-top: 0.4rem;
+    }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .form-label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .form-input,
+    .form-select {
+      border-radius: 999px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      background: rgba(15, 23, 42, 0.9);
+      padding: 0.55rem 0.9rem;
+      font-size: 0.8rem;
+      color: var(--text-primary);
+      outline: none;
+    }
+
+    .form-input:focus,
+    .form-select:focus {
+      border-color: rgba(34, 197, 94, 0.75);
+      box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.45);
+    }
+
+    .form-footer {
+      margin-top: 0.9rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .form-tip {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    /* FILTROS E TABELA */
+
+    .table-filters {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      padding: 0.35rem 0.8rem;
+      border-radius: 999px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      background: rgba(15, 23, 42, 0.9);
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .chip.is-active {
+      border-color: rgba(34, 197, 94, 0.75);
+      color: #bbf7d0;
+      background: rgba(34, 197, 94, 0.12);
+    }
+
+    .table-wrapper {
+      margin-top: 1rem;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+      min-width: 640px;
+    }
+
+    thead {
+      background: rgba(15, 23, 42, 0.95);
+    }
+
+    th,
+    td {
+      padding: 0.65rem 0.85rem;
+      text-align: left;
+      border-bottom: 1px solid rgba(31, 41, 55, 0.9);
+      white-space: nowrap;
+    }
+
+    th {
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    tbody tr:nth-child(odd) {
+      background: rgba(15, 23, 42, 0.75);
+    }
+
+    tbody tr:nth-child(even) {
+      background: rgba(15, 23, 42, 0.9);
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.18rem 0.65rem;
+      border-radius: 999px;
+      font-size: 0.72rem;
+    }
+
+    .tag-income {
+      background: rgba(34, 197, 94, 0.12);
+      color: #bbf7d0;
+    }
+
+    .tag-expense {
+      background: rgba(248, 113, 113, 0.12);
+      color: #fecaca;
+    }
+
+    .btn-small {
+      padding: 0.25rem 0.6rem;
+      font-size: 0.7rem;
+      border-radius: 999px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      background: rgba(15, 23, 42, 0.9);
+      color: #fecaca;
+      cursor: pointer;
+    }
+
+    .btn-small:hover {
+      border-color: rgba(248, 113, 113, 0.9);
+      background: rgba(248, 113, 113, 0.08);
+    }
+
+    .table-empty {
+      padding: 1rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    /* FOOTER */
+
+    footer {
+      padding: 1rem 1.25rem 1.5rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      border-top: 1px solid rgba(31, 41, 55, 0.9);
+      margin-top: auto;
+    }
+
+    footer .container {
+      padding-inline: 0;
+    }
+
+    /* GATE DE ASSINANTE */
+
+    .access-gate {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at top, #22c55e22, transparent 60%),
+        rgba(2, 6, 23, 0.96);
+      backdrop-filter: blur(20px);
+      transition: opacity 0.25s ease, visibility 0.25s ease;
+    }
+
+    .access-gate.is-hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .access-card {
+      width: min(380px, 100% - 2.5rem);
+      border-radius: 24px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      background: radial-gradient(circle at top left, #22c55e11, transparent 55%),
+        rgba(15, 23, 42, 0.98);
+      padding: 1.4rem 1.4rem 1.5rem;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .access-logo {
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 30%, #bbf7d0, #16a34a);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 0.9rem;
+      color: #022c22;
+      margin-bottom: 0.85rem;
+    }
+
+    .access-title {
+      font-size: 1rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .access-text {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-bottom: 0.85rem;
+    }
+
+    .access-input {
+      width: 100%;
+      border-radius: 999px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      background: rgba(15, 23, 42, 0.9);
+      padding: 0.6rem 0.9rem;
+      font-size: 0.8rem;
+      color: var(--text-primary);
+      outline: none;
+    }
+
+    .access-input:focus {
+      border-color: rgba(34, 197, 94, 0.8);
+      box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.5);
+    }
+
+    .access-error {
+      margin-top: 0.45rem;
+      font-size: 0.78rem;
+      color: #fecaca;
+      min-height: 1em;
+    }
+
+    .access-footer {
+      margin-top: 0.9rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .access-hint {
+      font-size: 0.74rem;
+      color: var(--text-muted);
+    }
+
+    @media (max-width: 880px) {
+      .intro {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .summary-card-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .layout-columns {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      table {
+        min-width: 520px;
+        font-size: 0.76rem;
+      }
+
+      .topbar-inner {
+        flex-wrap: wrap;
+        row-gap: 0.6rem;
+      }
+
+      .top-actions {
+        width: 100%;
+        justify-content: flex-end;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .summary-card-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .form-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .panel {
+        padding-inline: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- GATE DE ASSINANTE -->
+  <section id="accessGate" class="access-gate" aria-hidden="false">
+    <div class="access-card" role="dialog" aria-labelledby="gateTitle" aria-describedby="gateDescription">
+      <div class="access-logo">V</div>
+      <h2 id="gateTitle" class="access-title">Acesso de assinante</h2>
+      <p id="gateDescription" class="access-text">
+        Informe o <strong>código de liberação</strong> enviado pela equipe VAX para visualizar seu painel financeiro.
+      </p>
+
+      <input
+        id="accessCodeInput"
+        class="access-input"
+        type="password"
+        placeholder="Digite seu código de acesso"
+        autocomplete="off"
+      />
+
+      <div id="accessError" class="access-error"></div>
+
+      <div class="access-footer">
+        <p class="access-hint">Dica: códigos diferenciam maiúsculas e minúsculas.</p>
+        <button id="unlockButton" class="btn-primary">
+          <span>🔓</span>
+          Liberar acesso
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- APLICAÇÃO -->
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <div class="brand-logo">V</div>
+          <div>
+            <div class="brand-text-main">VAX <span>FinControl</span></div>
+            <div class="brand-subtitle">Painel financeiro para clientes da VAX Web Studio</div>
+          </div>
+        </div>
+
+        <div class="top-actions">
+          <div class="pill">Zona restrita</div>
+          <div class="pill pill-accent">Somente assinantes</div>
+          <button id="scrollToFormBtn" class="btn-primary">
+            <span>＋</span>
+            Novo lançamento
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="container">
+        <section class="intro">
+          <div>
+            <h1 class="intro-title">
+              Veja para onde seu <span>dinheiro</span> está indo.
+            </h1>
+            <p class="intro-text">
+              Registre receitas e despesas, acompanhe o saldo em tempo real e tome decisões mais inteligentes com um painel financeiro
+              simples, direto e pensado para o dia a dia.
+            </p>
+            <div class="intro-highlight">
+              <span>⚡</span>
+              <p>Todos os dados ficam apenas no seu navegador. Nada é enviado para servidores.</p>
+            </div>
+          </div>
+
+          <div class="summary-card-grid">
+            <article class="summary-card summary-income">
+              <p class="summary-label">Receitas</p>
+              <p id="summaryIncome" class="summary-value">R$ 0,00</p>
+              <p class="summary-pill">Entradas cadastradas</p>
+            </article>
+
+            <article class="summary-card summary-expense">
+              <p class="summary-label">Despesas</p>
+              <p id="summaryExpense" class="summary-value">R$ 0,00</p>
+              <p class="summary-pill">Saídas cadastradas</p>
+            </article>
+
+            <article class="summary-card summary-balance">
+              <p class="summary-label">Saldo</p>
+              <p id="summaryBalance" class="summary-value">R$ 0,00</p>
+              <p class="summary-pill">Receitas – Despesas</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="layout-columns">
+          <!-- FORM -->
+          <section class="panel" id="newEntryPanel">
+            <header class="panel-header">
+              <div>
+                <h2 class="panel-title">Novo lançamento</h2>
+                <p class="panel-subtitle">Adicione receitas ou despesas ao seu controle financeiro.</p>
+              </div>
+              <button id="clearAllBtn" class="btn-ghost">Limpar tudo</button>
+            </header>
+
+            <form id="entryForm">
+              <div class="form-grid">
+                <div class="form-field">
+                  <label class="form-label" for="tipo">Tipo</label>
+                  <select id="tipo" class="form-select" required>
+                    <option value="receita">Receita</option>
+                    <option value="despesa">Despesa</option>
+                  </select>
+                </div>
+
+                <div class="form-field">
+                  <label class="form-label" for="categoria">Categoria</label>
+                  <input
+                    id="categoria"
+                    class="form-input"
+                    type="text"
+                    placeholder="Ex: Salário, Mercado, Uber..."
+                    required
+                  />
+                </div>
+
+                <div class="form-field">
+                  <label class="form-label" for="descricao">Descrição</label>
+                  <input
+                    id="descricao"
+                    class="form-input"
+                    type="text"
+                    placeholder="Ex: Pagamento, compras do mês..."
+                    required
+                  />
+                </div>
+
+                <div class="form-field">
+                  <label class="form-label" for="valor">Valor (R$)</label>
+                  <input
+                    id="valor"
+                    class="form-input"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="0,00"
+                    required
+                  />
+                </div>
+
+                <div class="form-field">
+                  <label class="form-label" for="data">Data</label>
+                  <input id="data" class="form-input" type="date" required />
+                </div>
+              </div>
+
+              <div class="form-footer">
+                <p class="form-tip">Dica: use categorias parecidas para facilitar sua análise.</p>
+                <button type="submit" class="btn-primary">
+                  <span>✅</span>
+                  Adicionar lançamento
+                </button>
+              </div>
+            </form>
+          </section>
+
+          <!-- TABELA -->
+          <section class="panel">
+            <header class="panel-header">
+              <div>
+                <h2 class="panel-title">Lançamentos</h2>
+                <p class="panel-subtitle">Acompanhe todos os movimentos financeiros em um só lugar.</p>
+              </div>
+
+              <div class="table-filters">
+                <button class="chip is-active" data-filter="todos">Todos</button>
+                <button class="chip" data-filter="receita">Receitas</button>
+                <button class="chip" data-filter="despesa">Despesas</button>
+                <button id="exportBtn" class="chip">Exportar JSON</button>
+              </div>
+            </header>
+
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Tipo</th>
+                    <th>Descrição</th>
+                    <th>Categoria</th>
+                    <th>Data</th>
+                    <th>Valor</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="entryTableBody">
+                  <!-- linhas renderizadas via JS -->
+                </tbody>
+              </table>
+              <div id="tableEmpty" class="table-empty">
+                Nenhum lançamento cadastrado ainda. Comece adicionando um acima. 🚀
+              </div>
+            </div>
+          </section>
+        </section>
+      </section>
+    </main>
+
+    <footer>
+      <div class="container">
+        <p>VAX FinControl – criado por VAX Web Studio para clientes assinantes.</p>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    /************************************************
+     * CONFIGURAÇÃO DO SISTEMA DE CÓDIGOS
+     ************************************************/
+
+    // 🔐 Lista de códigos válidos para assinantes.
+    // Troque / adicione códigos aqui para cada cliente.
+    const VALID_CODES = [
+      "VAX-K1-ALPHA",
+      "VAX-K1-BETA",
+      "VAX-CLIENTE-001"
+    ];
+
+    // Chave usada para salvar o desbloqueio no navegador
+    const ACCESS_KEY = "vax_fincontrol_access_v2";
+
+    const accessGate = document.getElementById("accessGate");
+    const accessInput = document.getElementById("accessCodeInput");
+    const accessError = document.getElementById("accessError");
+    const unlockButton = document.getElementById("unlockButton");
+
+    function isUnlocked() {
+      return localStorage.getItem(ACCESS_KEY) === "unlocked";
+    }
+
+    function unlockForBrowser() {
+      localStorage.setItem(ACCESS_KEY, "unlocked");
+    }
+
+    function showGate() {
+      accessGate.classList.remove("is-hidden");
+      accessInput.focus();
+      document.body.style.overflow = "hidden";
+    }
+
+    function hideGate() {
+      accessGate.classList.add("is-hidden");
+      document.body.style.overflow = "";
+    }
+
+    function validateCode(code) {
+      return VALID_CODES.includes(code.trim());
+    }
+
+    function handleUnlock() {
+      const value = accessInput.value.trim();
+
+      if (!value) {
+        accessError.textContent = "Digite o seu código de acesso.";
+        return;
+      }
+
+      if (!validateCode(value)) {
+        accessError.textContent =
+          "Código inválido. Verifique com a VAX se você digitou corretamente.";
+        return;
+      }
+
+      // Código válido
+      unlockForBrowser();
+      accessError.textContent = "";
+      hideGate();
+    }
+
+    unlockButton.addEventListener("click", handleUnlock);
+    accessInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleUnlock();
+      }
+    });
+
+    /************************************************
+     * LÓGICA DO PAINEL FINANCEIRO
+     ************************************************/
+
+    const STORAGE_KEY = "vax_fincontrol_lancamentos_v2";
+
+    const entryForm = document.getElementById("entryForm");
+    const tableBody = document.getElementById("entryTableBody");
+    const tableEmpty = document.getElementById("tableEmpty");
+    const summaryIncome = document.getElementById("summaryIncome");
+    const summaryExpense = document.getElementById("summaryExpense");
+    const summaryBalance = document.getElementById("summaryBalance");
+    const filterChips = document.querySelectorAll(".chip[data-filter]");
+    const exportBtn = document.getElementById("exportBtn");
+    const clearAllBtn = document.getElementById("clearAllBtn");
+    const scrollToFormBtn = document.getElementById("scrollToFormBtn");
+    const newEntryPanel = document.getElementById("newEntryPanel");
+
+    let lancamentos = [];
+    let currentFilter = "todos";
+
+    function formatCurrency(number) {
+      return number.toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL"
+      });
+    }
+
+    function loadFromStorage() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        lancamentos = raw ? JSON.parse(raw) : [];
+      } catch (error) {
+        console.warn("Falha ao ler os lançamentos:", error);
+        lancamentos = [];
+      }
+    }
+
+    function saveToStorage() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(lancamentos));
+      } catch (error) {
+        console.warn("Não foi possível salvar os lançamentos:", error);
+      }
+    }
+
+    function updateSummary() {
+      let totalReceitas = 0;
+      let totalDespesas = 0;
+
+      for (const item of lancamentos) {
+        if (item.tipo === "receita") {
+          totalReceitas += item.valor;
+        } else {
+          totalDespesas += item.valor;
+        }
+      }
+
+      const saldo = totalReceitas - totalDespesas;
+
+      summaryIncome.textContent = formatCurrency(totalReceitas);
+      summaryExpense.textContent = formatCurrency(totalDespesas);
+      summaryBalance.textContent = formatCurrency(saldo);
+    }
+
+    function renderTable() {
+      tableBody.innerHTML = "";
+
+      const filtrados =
+        currentFilter === "todos"
+          ? lancamentos
+          : lancamentos.filter((item) => item.tipo === currentFilter);
+
+      if (filtrados.length === 0) {
+        tableEmpty.style.display = "block";
+        return;
+      }
+      tableEmpty.style.display = "none";
+
+      for (const item of filtrados) {
+        const tr = document.createElement("tr");
+
+        const tdTipo = document.createElement("td");
+        const tag = document.createElement("span");
+        tag.className =
+          "tag " + (item.tipo === "receita" ? "tag-income" : "tag-expense");
+        tag.textContent = item.tipo === "receita" ? "Receita" : "Despesa";
+        tdTipo.appendChild(tag);
+        tr.appendChild(tdTipo);
+
+        const tdDesc = document.createElement("td");
+        tdDesc.textContent = item.descricao;
+        tr.appendChild(tdDesc);
+
+        const tdCategoria = document.createElement("td");
+        tdCategoria.textContent = item.categoria;
+        tr.appendChild(tdCategoria);
+
+        const tdData = document.createElement("td");
+        tdData.textContent = item.data;
+        tr.appendChild(tdData);
+
+        const tdValor = document.createElement("td");
+        tdValor.textContent = formatCurrency(item.valor);
+        tr.appendChild(tdValor);
+
+        const tdAcoes = document.createElement("td");
+        const btnDel = document.createElement("button");
+        btnDel.className = "btn-small";
+        btnDel.textContent = "Excluir";
+        btnDel.addEventListener("click", () => removeEntry(item.id));
+        tdAcoes.appendChild(btnDel);
+        tr.appendChild(tdAcoes);
+
+        tableBody.appendChild(tr);
+      }
+    }
+
+    function addEntryFromForm(event) {
+      event.preventDefault();
+
+      const tipo = document.getElementById("tipo").value;
+      const descricao = document.getElementById("descricao").value.trim();
+      const categoria = document.getElementById("categoria").value.trim();
+      const valor = parseFloat(document.getElementById("valor").value);
+      const data = document.getElementById("data").value;
+
+      if (!descricao || !categoria || !data || isNaN(valor) || valor <= 0) {
+        alert("Preencha todos os campos com um valor maior que zero.");
+        return;
+      }
+
+      const novo = {
+        id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
+        tipo,
+        descricao,
+        categoria,
+        valor,
+        data
+      };
+
+      lancamentos.push(novo);
+      saveToStorage();
+      updateSummary();
+      renderTable();
+      entryForm.reset();
+      document.getElementById("tipo").value = tipo; // mantém o tipo
+    }
+
+    function removeEntry(id) {
+      if (!confirm("Deseja realmente excluir este lançamento?")) return;
+      lancamentos = lancamentos.filter((item) => item.id !== id);
+      saveToStorage();
+      updateSummary();
+      renderTable();
+    }
+
+    function handleFilterClick(e) {
+      const chip = e.currentTarget;
+      const filtro = chip.getAttribute("data-filter");
+      currentFilter = filtro;
+
+      filterChips.forEach((c) => c.classList.remove("is-active"));
+      chip.classList.add("is-active");
+
+      renderTable();
+    }
+
+    function handleExport() {
+      if (lancamentos.length === 0) {
+        alert("Não há dados para exportar.");
+        return;
+      }
+
+      const dados = JSON.stringify(lancamentos, null, 2);
+      const blob = new Blob([dados], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "fincontrol-dados.json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function handleClearAll() {
+      if (
+        !confirm(
+          "Tem certeza que deseja limpar TODOS os lançamentos salvos neste navegador?"
+        )
+      )
+        return;
+
+      lancamentos = [];
+      saveToStorage();
+      updateSummary();
+      renderTable();
+    }
+
+    function setupListeners() {
+      entryForm.addEventListener("submit", addEntryFromForm);
+      filterChips.forEach((chip) =>
+        chip.addEventListener("click", handleFilterClick)
+      );
+      exportBtn.addEventListener("click", handleExport);
+      clearAllBtn.addEventListener("click", handleClearAll);
+
+      scrollToFormBtn.addEventListener("click", () => {
+        newEntryPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+
+      // Se outro tab do navegador alterar os dados, atualiza aqui
+      window.addEventListener("storage", (event) => {
+        if (event.key !== STORAGE_KEY) return;
+        try {
+          lancamentos = event.newValue ? JSON.parse(event.newValue) : [];
+        } catch {
+          lancamentos = [];
+        }
+        updateSummary();
+        renderTable();
+      });
+    }
+
+    function init() {
+      // Gate de acesso
+      if (isUnlocked()) {
+        hideGate();
+      } else {
+        showGate();
+      }
+
+      // Painel
+      loadFromStorage();
+      updateSummary();
+      renderTable();
+      setupListeners();
+    }
+
+    document.addEventListener("DOMContentLoaded", init);
+  </script>
+</body>
+</html>
